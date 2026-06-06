@@ -1,0 +1,57 @@
+@import 'tailwindcss';
+@variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html.dark {
+    color-scheme: dark;
+  }
+}
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+
+  /* Custom Green Color Palette (Botanical Forest Theme) */
+  --color-green-50: #f0fbf7;
+  --color-green-100: #dcf4ec;
+  --color-green-200: #bceade;
+  --color-green-300: #a2dfcc; /* Mint Light Green */
+  --color-green-400: #6fc9ac;
+  --color-green-500: #3d8c75; /* Medium Green / Teal */
+  --color-green-600: #2d6c5a;
+  --color-green-700: #1b4d3e; /* Forest Muted Dark Green */
+  --color-green-800: #13382d;
+  --color-green-900: #0e2820;
+  --color-green-950: #08100d; /* Midnight Deep Forest Black */
+
+  /* Sync Emerald with Green to cover all bases */
+  --color-emerald-50: #f0fbf7;
+  --color-emerald-100: #dcf4ec;
+  --color-emerald-200: #bceade;
+  --color-emerald-300: #a2dfcc;
+  --color-emerald-400: #6fc9ac;
+  --color-emerald-500: #3d8c75;
+  --color-emerald-600: #2d6c5a;
+  --color-emerald-700: #1b4d3e;
+  --color-emerald-800: #13382d;
+  --color-emerald-900: #0e2820;
+  --color-emerald-950: #08100d;
+
+  /* Overwrite dark mode background slate/neutral shades to deep forest black for immersive theme */
+  --color-slate-900: #08100d;
+  --color-slate-950: #040907;
+  
+  --color-gray-900: #08100d;
+  --color-gray-950: #040907;
+
+  --color-zinc-900: #08100d;
+  --color-zinc-950: #040907;
+
+  --color-neutral-900: #08100d;
+  --color-neutral-950: #040907;
+}
