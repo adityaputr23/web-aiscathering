@@ -1,0 +1,58 @@
+# ==============================================================================
+# TEMPLATE GITHUB ACTIONS UNTUK OTOMATISASI BUILD & UPLOAD APK ANDROID
+# ==============================================================================
+# Petunjuk Penggunaan:
+# 1. Buat folder bernama `.github/workflows` di dalam direktori utama (root) 
+#    project Android Anda (bukan project Laravel ini, melainkan project Android Anda).
+# 2. Buat file baru bernama `deploy-apk.yml` di dalam folder tersebut.
+# 3. Salin dan tempel (paste) isi seluruh file ini ke dalam file `deploy-apk.yml` tersebut.
+# 4. Tambahkan GitHub Secrets di pengaturan repository GitHub Android Anda:
+#    - SERVER_HOST: srv1645983.hstgr.cloud
+#    - SERVER_USERNAME: aish
+#    - SERVER_SSH_KEY: [Isi dengan Private SSH Key yang bisa masuk ke server Anda]
+# ==============================================================================
+
+name: Build and Deploy Android APK
+
+on:
+  push:
+    branches:
+      - main  # Ganti dengan branch utama Android Anda (misal: master/main)
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
+
+      - name: Prepare APK for Upload
+        run: |
+          mkdir -p build-artifacts
+          # Mencari file APK hasil compile dan menyalinnya dengan nama aish_catering.apk
+          find app/build/outputs/apk/release/ -name "*.apk" -exec cp {} build-artifacts/aish_catering.apk \;
+
+      - name: Upload APK to Web Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          source: "build-artifacts/aish_catering.apk"
+          target: "/home/aish/web-aiscathering/public"
+          strip_components: 1
