@@ -7,6 +7,7 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\Events\OrderStatusUpdated;
 
 class CustomerCartController extends Controller
 {
@@ -135,6 +136,9 @@ class CustomerCartController extends Controller
             'payment_status' => 'UNPAID',
             'fcm_token_user' => $user->fcm_token ?? null,
         ]);
+
+        // Broadcast order placement to admin real-time
+        event(new OrderStatusUpdated($order));
 
         session()->forget('customer_cart');
 

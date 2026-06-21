@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use App\Models\Order;
+use App\Events\OrderStatusUpdated;
 
 class AndroidApiController extends Controller
 {
@@ -75,7 +77,7 @@ class AndroidApiController extends Controller
                 "email" => $user->email,
                 "phone" => $user->phone,
                 "address" => $user->address,
-                "photo" => $user->photo ?? $user->profile_photo,
+                "photo" => $this->formatUserPhoto($user->photo ?? $user->profile_photo),
                 "is_admin" => (bool) $user->is_admin,
                 "is_member" => (bool) $user->is_member
             ]
@@ -104,7 +106,7 @@ class AndroidApiController extends Controller
                     "email" => $user->email,
                     "phone" => $user->phone,
                     "address" => $user->address,
-                    "photo" => $user->photo ?? $user->profile_photo,
+                    "photo" => $this->formatUserPhoto($user->photo ?? $user->profile_photo),
                     "is_admin" => (bool) $user->is_admin,
                     "is_member" => (bool) $user->is_member
                 ]
@@ -183,7 +185,7 @@ class AndroidApiController extends Controller
                 "email" => $user->email,
                 "phone" => $user->phone,
                 "address" => $user->address,
-                "photo" => $user->photo ?? $user->profile_photo,
+                "photo" => $this->formatUserPhoto($user->photo ?? $user->profile_photo),
                 "is_admin" => (bool) $user->is_admin,
                 "is_member" => (bool) $user->is_member
             ]
@@ -248,7 +250,7 @@ class AndroidApiController extends Controller
                 "email" => $user->email,
                 "phone" => $user->phone,
                 "address" => $user->address,
-                "photo" => $user->photo ?? $user->profile_photo,
+                "photo" => $this->formatUserPhoto($user->photo ?? $user->profile_photo),
                 "is_admin" => (bool) $user->is_admin,
                 "is_member" => (bool) $user->is_member
             ]
@@ -422,7 +424,7 @@ class AndroidApiController extends Controller
     public function sendMessage(Request $request)
     {
         $sender = $request->input('sender_email', '');
-        $receiver = $request->input('receiver_email', 'admin@aishcatering.com');
+        $receiver = $request->input('receiver_email', 'aishcatering2@gmail.com');
         $messageText = $request->input('message', '');
         $type = $request->input('sender_type', 'USER');
 
@@ -453,13 +455,13 @@ class AndroidApiController extends Controller
         }
 
         // Tandai sudah dibaca
-        Message::where('sender_email', $email)->where('receiver_email', 'admin@aishcatering.com')->where('is_read', 0)->update(['is_read' => 1]);
-        Message::where('sender_email', 'admin@aishcatering.com')->where('receiver_email', $email)->where('is_read', 0)->update(['is_read' => 1]);
+        Message::where('sender_email', $email)->where('receiver_email', 'aishcatering2@gmail.com')->where('is_read', 0)->update(['is_read' => 1]);
+        Message::where('sender_email', 'aishcatering2@gmail.com')->where('receiver_email', $email)->where('is_read', 0)->update(['is_read' => 1]);
 
         $chats = Message::where(function($q) use ($email) {
-            $q->where('sender_email', $email)->where('receiver_email', 'admin@aishcatering.com');
+            $q->where('sender_email', $email)->where('receiver_email', 'aishcatering2@gmail.com');
         })->orWhere(function($q) use ($email) {
-            $q->where('sender_email', 'admin@aishcatering.com')->where('receiver_email', $email);
+            $q->where('sender_email', 'aishcatering2@gmail.com')->where('receiver_email', $email);
         })->orderBy('created_at', 'asc')->get();
 
         $formatted = $chats->map(function($chat) {
@@ -485,11 +487,11 @@ class AndroidApiController extends Controller
                 c.sender_email AS email,
                 COALESCE(u.name, IF(c.sender_email LIKE 'guest_%', REPLACE(c.sender_email, 'guest_', ''), 'User Baru')) AS name,
                 MAX(c.created_at) AS last_chat,
-                (SELECT COUNT(*) FROM chats WHERE sender_email = c.sender_email AND receiver_email = 'admin@aishcatering.com' AND is_read = 0) AS unread_count
+                (SELECT COUNT(*) FROM chats WHERE sender_email = c.sender_email AND receiver_email = 'aishcatering2@gmail.com' AND is_read = 0) AS unread_count
             FROM chats c
             LEFT JOIN users u ON c.sender_email = u.email
             WHERE c.sender_type = 'USER'
-            GROUP BY c.sender_email
+            GROUP BY c.sender_email, u.name
             ORDER BY last_chat DESC
         ");
 
@@ -726,7 +728,7 @@ class AndroidApiController extends Controller
                 "rating" => (float)$menu->rating,
                 "sold" => (int)$menu->sold,
                 "description" => $menu->description,
-                "image_url" => $menu->image_url,
+                "image_url" => $this->formatImageUrl($menu->image_url),
                 "review_count" => (int)($menu->review_count ?? 0),
                 "is_available" => (int)($menu->is_available ? 1 : 0),
                 "is_featured" => (int)($menu->is_featured ? 1 : 0),
@@ -820,7 +822,7 @@ class AndroidApiController extends Controller
         return response()->json([
             "status" => "success",
             "message" => "Menu berhasil disimpan",
-            "image_url" => $imageUrl ?? ($menu->image_url ?? null)
+            "image_url" => $this->formatImageUrl($imageUrl ?? ($menu->image_url ?? null))
         ]);
     }
 
@@ -901,7 +903,7 @@ class AndroidApiController extends Controller
                 "email" => $user->email,
                 "phone" => $user->phone,
                 "address" => $user->address,
-                "photo" => $user->photo ?? $user->profile_photo,
+                "photo" => $this->formatUserPhoto($user->photo ?? $user->profile_photo),
                 "is_admin" => (bool)$user->is_admin,
                 "is_member" => (bool)$user->is_member
             ];
@@ -1050,13 +1052,17 @@ class AndroidApiController extends Controller
             return response()->json(["status" => "success", "message" => "Order sudah tersimpan"]);
         }
 
-        // If user_id is 0, try to resolve from email
-        if ($userId <= 0 && !empty($email)) {
+        // Resolve user and FCM token
+        $user = null;
+        if ($userId > 0) {
+            $user = User::find($userId);
+        } elseif (!empty($email)) {
             $user = User::where('email', $email)->first();
             if ($user) {
                 $userId = $user->id;
             }
         }
+        $fcmTokenUser = $user ? $user->fcm_token : null;
 
         try {
             DB::table('orders')->insert([
@@ -1080,6 +1086,7 @@ class AndroidApiController extends Controller
                 'cancel_reason'   => null,
                 'payment_method'  => $paymentMethod,
                 'payment_status'  => $status === 'Menunggu Pembayaran' ? 'UNPAID' : 'COD',
+                'fcm_token_user'  => $fcmTokenUser,
                 'notified_admin'  => 0,
                 'notified_user'   => 0,
                 'created_at'      => Carbon::now('Asia/Jakarta'),
@@ -1087,6 +1094,12 @@ class AndroidApiController extends Controller
             ]);
 
             Log::info("placeOrder: Order $orderId saved successfully for $email");
+
+            $order = Order::where('order_id', $orderId)->first();
+            if ($order) {
+                event(new OrderStatusUpdated($order));
+            }
+
             return response()->json(["status" => "success", "message" => "Pesanan berhasil disimpan"]);
         } catch (\Exception $e) {
             Log::error("placeOrder: Exception - " . $e->getMessage());
@@ -1114,6 +1127,18 @@ class AndroidApiController extends Controller
         $ordersRaw = $query->orderBy('created_at', 'desc')->get();
 
         $orders = $ordersRaw->map(function ($row) {
+            $items = json_decode($row->items_json ?? '[]', true);
+            if (is_array($items)) {
+                foreach ($items as &$item) {
+                    if (isset($item['image_url']) && $item['image_url']) {
+                        $item['image_url'] = $this->formatImageUrl($item['image_url']);
+                    }
+                }
+                $itemsJson = json_encode($items);
+            } else {
+                $itemsJson = $row->items_json ?? '[]';
+            }
+
             return [
                 "id"             => $row->order_id ?? (string) $row->id,
                 "order_id"       => $row->order_id ?? (string) $row->id,
@@ -1121,7 +1146,7 @@ class AndroidApiController extends Controller
                 "customer_email" => $row->user_email,
                 "items_title"    => $row->items_title,
                 "items_subtitle" => $row->items_subtitle ?? '',
-                "items_json"     => $row->items_json ?? '[]',
+                "items_json"     => $itemsJson,
                 "emoji"          => $row->emoji ?? '📦',
                 "total_price"    => (int) $row->total_price,
                 "total"          => (int) $row->total_price,
@@ -1151,30 +1176,86 @@ class AndroidApiController extends Controller
         }
 
         // Try matching on order_id string first, fallback to numeric id
-        $updated = DB::table('orders')
-            ->where('order_id', $orderId)
-            ->update([
+        $order = Order::where('order_id', $orderId)->first() ?? Order::find($orderId);
+
+        if ($order) {
+            $order->update([
                 'status'        => $newStatus,
                 'cancel_reason' => $cancelReason,
                 'notified_user' => 0,
                 'updated_at'    => Carbon::now('Asia/Jakarta'),
             ]);
 
-        if (!$updated) {
-            $updated = DB::table('orders')
-                ->where('id', $orderId)
-                ->update([
-                    'status'        => $newStatus,
-                    'cancel_reason' => $cancelReason,
-                    'notified_user' => 0,
-                    'updated_at'    => Carbon::now('Asia/Jakarta'),
-                ]);
-        }
+            // Send FCM push notification to consumer's device for real-time update
+            $this->sendOrderStatusNotification($order);
 
-        if ($updated) {
+            // Broadcast websocket event
+            event(new OrderStatusUpdated($order));
+
             return response()->json(["status" => "success", "message" => "Status pesanan diperbarui"]);
         }
 
         return response()->json(["status" => "error", "message" => "Pesanan tidak ditemukan"]);
+    }
+
+    protected function sendOrderStatusNotification($order)
+    {
+        $token = $order->fcm_token_user;
+        if (!$token && $order->user_id) {
+            $user = User::find($order->user_id);
+            if ($user) {
+                $token = $user->fcm_token;
+            }
+        }
+        if (!$token && $order->user_email) {
+            $user = User::where('email', $order->user_email)->first();
+            if ($user) {
+                $token = $user->fcm_token;
+            }
+        }
+
+        if ($token) {
+            try {
+                $title = "Update Pesanan #" . ($order->order_id ?? $order->id);
+                $body = "Status pesanan Anda telah diperbarui menjadi: " . $order->status;
+                if ($order->status === 'Dibatalkan' || $order->status === 'CANCELLED') {
+                    if ($order->cancel_reason) {
+                        $body .= " (" . $order->cancel_reason . ")";
+                    }
+                }
+
+                $fcm = new \App\Services\FcmService();
+                $fcm->sendPush($token, $title, $body, [
+                    'type' => 'order_status_update',
+                    'order_id' => (string)($order->order_id ?? $order->id),
+                    'status' => $order->status
+                ]);
+                Log::info("FCM order status notification sent to user " . $order->user_email);
+            } catch (\Exception $e) {
+                Log::error("Failed to send FCM order status update: " . $e->getMessage());
+            }
+        }
+    }
+
+    private function formatImageUrl($path)
+    {
+        if (empty($path)) {
+            return null;
+        }
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+        return asset($path);
+    }
+
+    private function formatUserPhoto($photo)
+    {
+        if (empty($photo)) {
+            return null;
+        }
+        if (str_starts_with($photo, 'http://') || str_starts_with($photo, 'https://')) {
+            return $photo;
+        }
+        return asset('uploads/profile/' . $photo);
     }
 }

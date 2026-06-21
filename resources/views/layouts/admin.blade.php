@@ -426,7 +426,7 @@
                             class="absolute right-0 mt-3 w-64 bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl shadow-2xl p-4 hidden z-50">
                             <div class="p-3 border-b border-[var(--border)] mb-2">
                                 <p class="text-xs font-bold text-[var(--text-main)]">{{ Auth::user()->email ??
-                                    'admin@aishcatering.com' }}</p>
+                                    'aishcatering2@gmail.com' }}</p>
                                 <p class="text-[10px] text-[var(--text-muted)] font-medium">Session Active: 2h 45m</p>
                             </div>
                             <a href="{{ route('admin.profile') }}"

@@ -1558,45 +1558,108 @@
                 }
             };
 
+            const container = document.getElementById('global-chatbot-container');
+            let transitionTimeout;
+
+            function adjustChatLayout() {
+                const isMobile = window.innerWidth < 640;
+                
+                if (isMobile && isChatOpen) {
+                    // Hide chatbot toggle to prevent layout overlap
+                    if (chatToggle) {
+                        chatToggle.style.opacity = '0';
+                        chatToggle.style.pointerEvents = 'none';
+                    }
+
+                    if (window.visualViewport) {
+                        const vp = window.visualViewport;
+                        chatBox.style.position = 'fixed';
+                        chatBox.style.left = `${vp.offsetLeft}px`;
+                        chatBox.style.top = `${vp.offsetTop}px`;
+                        chatBox.style.width = `${vp.width}px`;
+                        chatBox.style.height = `${vp.height}px`;
+                        chatBox.style.maxHeight = `${vp.height}px`;
+                        chatBox.style.borderRadius = '0px';
+                        chatBox.style.bottom = 'auto';
+                        chatBox.style.right = 'auto';
+                        chatBox.style.zIndex = '9999';
+                    } else {
+                        chatBox.style.position = 'fixed';
+                        chatBox.style.left = '0';
+                        chatBox.style.top = '0';
+                        chatBox.style.width = '100%';
+                        chatBox.style.height = '100%';
+                        chatBox.style.maxHeight = '100%';
+                        chatBox.style.borderRadius = '0px';
+                        chatBox.style.zIndex = '9999';
+                    }
+                } else {
+                    // Show chatbot toggle
+                    if (chatToggle) {
+                        chatToggle.style.opacity = '1';
+                        chatToggle.style.pointerEvents = 'auto';
+                    }
+                    
+                    // Reset chat box inline styles to let CSS/Tailwind take over
+                    chatBox.style.position = '';
+                    chatBox.style.left = '';
+                    chatBox.style.top = '';
+                    chatBox.style.width = '';
+                    chatBox.style.height = '';
+                    chatBox.style.maxHeight = '';
+                    chatBox.style.borderRadius = '';
+                    chatBox.style.bottom = '';
+                    chatBox.style.right = '';
+                    chatBox.style.zIndex = '';
+
+                    // Position the container (for desktop view only)
+                    if (window.visualViewport && !isMobile) {
+                        const vp = window.visualViewport;
+                        const keyboardHeight = window.innerHeight - vp.height;
+                        if (keyboardHeight > 100) {
+                            if (container) container.style.bottom = `${keyboardHeight + 20}px`;
+                        } else {
+                            if (container) container.style.bottom = '';
+                        }
+                    } else {
+                        if (container) container.style.bottom = '';
+                    }
+                }
+            }
+
             chatToggle.addEventListener('click', () => {
                 isChatOpen = !isChatOpen;
+                clearTimeout(transitionTimeout);
                 if (isChatOpen) {
+                    adjustChatLayout();
                     chatBox.classList.add('scale-100');
                     chatNotification?.classList.add('hidden');
                     stopFlashTitle();
                     fetchMessages(); // Refresh messages when opening
                 } else {
                     chatBox.classList.remove('scale-100');
+                    transitionTimeout = setTimeout(() => {
+                        adjustChatLayout();
+                    }, 500);
                 }
             });
 
             closeChat.addEventListener('click', () => {
                 isChatOpen = false;
+                clearTimeout(transitionTimeout);
                 chatBox.classList.remove('scale-100');
+                transitionTimeout = setTimeout(() => {
+                    adjustChatLayout();
+                }, 500);
             });
 
             chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') window.handleChat(); });
 
-
-            // Keyboard Adaptability (Mobile UX)
             if (window.visualViewport) {
-                const container = document.getElementById('global-chatbot-container');
-                const updatePosition = () => {
-                    const viewport = window.visualViewport;
-                    const keyboardHeight = window.innerHeight - viewport.height;
-                    
-                    if (keyboardHeight > 100) { // Keyboard is likely visible
-                        // Move up precisely above keyboard with extra padding
-                        container.style.bottom = `${keyboardHeight + 20}px`;
-                    } else {
-                        // Return to default position (32px = bottom-8)
-                        container.style.bottom = '32px';
-                    }
-                };
-
-                window.visualViewport.addEventListener('resize', updatePosition);
-                window.visualViewport.addEventListener('scroll', updatePosition);
+                window.visualViewport.addEventListener('resize', adjustChatLayout);
+                window.visualViewport.addEventListener('scroll', adjustChatLayout);
             }
+            window.addEventListener('resize', adjustChatLayout);
         })();
     </script>
     <script>

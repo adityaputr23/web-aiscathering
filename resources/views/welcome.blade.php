@@ -77,6 +77,15 @@
             box-shadow: 0 10px 25px -5px rgba(61, 140, 117, 0.4), 0 0 15px rgba(61, 140, 117, 0.2) !important;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
         }
+
+        /* Modal transitions */
+        #menu-detail-modal.modal-active {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        #modal-content.modal-content-active {
+            transform: translateY(0) scale(1) !important;
+        }
     </style>
     <!-- Navbar -->
     <nav id="main-nav"
@@ -257,7 +266,6 @@
             hamburger.classList.remove('hidden');
             close.classList.add('hidden');
         }
-
         // Sync mobile theme toggle with desktop
         document.getElementById('theme-toggle-mobile').addEventListener('click', function () {
             document.getElementById('theme-toggle').click();
@@ -266,52 +274,14 @@
 
 
     <!-- Hero Section — Full Screen Cinematic -->
-    <header id="home" class="relative overflow-hidden" style="min-height:100vh;display:flex;flex-direction:column;">
+    <header id="home" class="relative overflow-hidden bg-slate-50 dark:bg-[#09090b]" style="min-height:100vh;display:flex;flex-direction:column;">
 
-        <!-- Background Food Video/Photo -->
-        <div class="absolute inset-0">
-            @php
-                $heroVideo = $contents['hero_video'] ?? null;
-                $heroImg = $contents['hero_image'] ?? 'uploads/contents/hero.png';
-                if ($heroImg === 'assets/img/hero.png') {
-                    $heroImg = 'uploads/contents/hero.png';
-                }
-                $heroImgUrl = filter_var($heroImg, FILTER_VALIDATE_URL) ? $heroImg : asset($heroImg);
-            @endphp
-            <!-- DEBUG: Hero Video Path = {{ $heroVideo }} -->
-
-            @if($heroVideo)
-                <video id="hero-bg-video" autoplay muted loop playsinline webkit-playsinline
-                    class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto object-cover"
-                    poster="{{ $heroImgUrl }}">
-                    <source
-                        src="{{ (filter_var($heroVideo, FILTER_VALIDATE_URL) ? $heroVideo : asset($heroVideo)) . '?v=' . time() }}"
-                        type="video/mp4">
-                </video>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        var video = document.getElementById('hero-bg-video');
-                        if (video) {
-                            video.play().catch(function (error) {
-                                console.log("Autoplay prevented, retrying on interaction...");
-                            });
-                        }
-                    });
-                </script>
-            @else
-                <img src="{{ $heroImgUrl }}" alt="AISH Catering Hero" class="w-full h-full object-cover"
-                    style="transform:scale(1.08);transition:transform 10s ease-out;" onload="this.style.transform='scale(1)'">
-            @endif
-
-            <!-- Layered overlays for depth -->
-            <div class="absolute inset-0"
-                style="background:linear-gradient(135deg,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.4) 50%,rgba(0,0,0,0.65) 100%);">
-            </div>
-            <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.8) 0%,transparent 60%);">
-            </div>
-            <!-- Green tint accent -->
-            <div class="absolute inset-0"
-                style="background:radial-gradient(ellipse at 20% 50%,rgba(34,197,94,0.12) 0%,transparent 60%);"></div>
+        <!-- Ambient Decorative Orbs for solid background -->
+        <div class="absolute inset-0 pointer-events-none overflow-hidden">
+            <div class="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full opacity-25 dark:opacity-10"
+                style="background: radial-gradient(circle, rgba(34,197,94,0.15), transparent 70%); filter: blur(80px);"></div>
+            <div class="absolute top-1/2 -left-40 w-[600px] h-[600px] rounded-full opacity-20 dark:opacity-10"
+                style="background: radial-gradient(circle, rgba(249,115,22,0.12), transparent 70%); filter: blur(80px);"></div>
         </div>
 
         <!-- Main Content — Centered -->
@@ -320,20 +290,18 @@
 
             <!-- Eyebrow badges -->
             <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-1.5 sm:gap-3 mb-4 sm:mb-8">
-                <div class="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[9px] sm:text-xs font-bold uppercase tracking-wider"
-                    style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#4ade80;backdrop-filter:blur(10px);">
-                    <span class="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full animate-pulse" style="background:#4ade80;"></span>
+                <div class="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[9px] sm:text-xs font-bold uppercase tracking-wider bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 dark:border-emerald-500/40 text-emerald-600 dark:text-emerald-400 backdrop-blur-md">
+                    <span class="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full animate-pulse bg-emerald-500 dark:bg-emerald-400"></span>
                     🌟 Katering No. 1
                 </div>
-                <div class="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[9px] sm:text-xs font-bold uppercase tracking-wider"
-                    style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;backdrop-filter:blur(10px);">
+                <div class="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[9px] sm:text-xs font-bold uppercase tracking-wider bg-slate-200/50 dark:bg-white/10 border border-slate-300/50 dark:border-white/20 text-slate-700 dark:text-white backdrop-blur-md">
                     🥗 Halal & Higienis
                 </div>
             </div>
 
             <!-- Main heading -->
-            <h1 class="font-poppins font-extrabold text-white reveal-text px-2"
-                style="font-size:clamp(2rem,7vw,6.5rem);line-height:1.08;max-width:900px;text-shadow:0 4px 30px rgba(0,0,0,0.4);">
+            <h1 class="font-poppins font-extrabold text-slate-900 dark:text-white reveal-text px-2"
+                style="font-size:clamp(2rem,7vw,6.5rem);line-height:1.08;max-width:900px;">
                 @if(isset($contents['hero_title_1']))
                     {!! $contents['hero_title_1'] !!} &amp; {!! $contents['hero_title_2'] !!}
                 @else
@@ -359,8 +327,7 @@
                     </svg>
                 </a>
                 <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $contents['whatsapp_number'] ?? '628123456789') }}"
-                    class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-xs sm:text-sm transition-all duration-300 hover:scale-105"
-                    style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.3);color:white;backdrop-filter:blur(16px);">
+                    class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-xs sm:text-sm transition-all duration-300 hover:scale-105 bg-slate-200/50 dark:bg-white/10 border border-slate-300/50 dark:border-white/20 text-slate-700 dark:text-white backdrop-blur-md">
                     <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                         <path
                             d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
@@ -368,14 +335,13 @@
                     WhatsApp
                 </a>
                 <a href="#download"
-                    class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-xs transition-all duration-300 hover:scale-105"
-                    style="background:rgba(249,115,22,0.15);border:1.5px solid rgba(249,115,22,0.4);color:#fb923c;backdrop-filter:blur(16px);">
+                    class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-xs transition-all duration-300 hover:scale-105 bg-[#f97316]/10 dark:bg-[#f97316]/15 border border-[#f97316]/20 dark:border-[#f97316]/40 text-[#f97316] dark:text-[#fb923c] backdrop-blur-md">
                     📱 Download App
                 </a>
             </div>
 
             <!-- Scroll Indicator — hidden on mobile -->
-            <div class="hidden sm:flex mt-10 flex-col items-center gap-2" style="color:rgba(255,255,255,0.35);">
+            <div class="hidden sm:flex mt-10 flex-col items-center gap-2 text-slate-400 dark:text-white/35">
                 <span style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;">Scroll</span>
                 <svg class="w-5 h-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -386,40 +352,36 @@
         <!-- Bottom Stats Bar — relative on mobile, absolute on desktop -->
         <div class="relative lg:absolute lg:bottom-0 left-0 right-0 z-20 w-full" id="stats-section">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-5">
-                <div class="grid lg:grid-cols-[1.05fr_2fr] rounded-[1.6rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl"
-                    style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(24px);">
+                <div class="grid lg:grid-cols-[1.05fr_2fr] rounded-[1.6rem] sm:rounded-[2.5rem] overflow-hidden bg-white/80 dark:bg-[#18181b]/80 border border-slate-200 dark:border-white/10 backdrop-blur-2xl shadow-xl dark:shadow-2xl">
 
-                    <div class="p-5 sm:p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-white/5"
-                        style="background:rgba(0,0,0,0.28);">
-                        <p class="text-[10px] sm:text-xs font-black uppercase tracking-[0.22em] text-[#5ce9c5]">
+                    <div class="p-5 sm:p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-black/30">
+                        <p class="text-[10px] sm:text-xs font-black uppercase tracking-[0.22em] text-emerald-600 dark:text-[#5ce9c5]">
                             Layanan Acara
                         </p>
-                        <h2 class="mt-2 sm:mt-3 font-poppins font-black text-2xl sm:text-4xl leading-tight text-white">
+                        <h2 class="mt-2 sm:mt-3 font-poppins font-black text-2xl sm:text-4xl leading-tight text-slate-900 dark:text-white">
                             Siap dari brief sampai tersaji.
                         </h2>
-                        <p class="mt-3 text-[12px] sm:text-sm leading-relaxed text-white/60">
+                        <p class="mt-3 text-[12px] sm:text-sm leading-relaxed text-slate-600 dark:text-white/60">
                             Tim AISH bantu rapikan menu, porsi, dan jadwal pengantaran agar persiapan acara lebih tenang.
                         </p>
                     </div>
 
                     <div class="grid grid-cols-2 lg:grid-cols-4">
-                        <div class="group min-h-[135px] p-4 sm:p-6 border-r border-b sm:border-r lg:border-b-0 border-white/5"
-                            style="background:rgba(0,0,0,0.20);">
+                        <div class="group min-h-[135px] p-4 sm:p-6 border-r border-b sm:border-r lg:border-b-0 border-slate-200 dark:border-white/5 bg-slate-50/30 dark:bg-black/20">
                             <div
-                                class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#5ce9c5]/15 text-[#5ce9c5] flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                                class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-emerald-100 dark:bg-[#5ce9c5]/15 text-emerald-600 dark:text-[#5ce9c5] flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path d="M8 10h8M8 14h5M7 4h10a3 3 0 013 3v8a3 3 0 01-3 3h-4l-4 3v-3H7a3 3 0 01-3-3V7a3 3 0 013-3z"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </div>
-                            <h3 class="font-bold text-[13px] sm:text-base text-white leading-snug">Konsultasi Menu</h3>
-                            <p class="mt-2 text-[10px] sm:text-xs leading-relaxed text-white/55">
+                            <h3 class="font-bold text-[13px] sm:text-base text-slate-800 dark:text-white leading-snug">Konsultasi Menu</h3>
+                            <p class="mt-2 text-[10px] sm:text-xs leading-relaxed text-slate-500 dark:text-white/55">
                                 Rekomendasi hidangan sesuai tema dan tamu.
                             </p>
                         </div>
 
-                        <div class="group min-h-[135px] p-4 sm:p-6 border-b sm:border-r lg:border-b-0 border-white/5"
-                            style="background:rgba(0,0,0,0.16);">
+                        <div class="group min-h-[135px] p-4 sm:p-6 border-b sm:border-r lg:border-b-0 border-slate-200 dark:border-white/5 bg-slate-50/20 dark:bg-black/16">
                         <p
                             class="hidden">
                             <span data-target="4.9" data-decimals="1">0.0</span>
@@ -430,19 +392,19 @@
                             
                         </p>
                             <div
-                                class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#ffa043]/15 text-[#ffa043] flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                                class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-orange-100 dark:bg-[#ffa043]/15 text-orange-600 dark:text-[#ffa043] flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path d="M4 7h16M7 7v13m10-13v13M8 11h8M8 15h8M6 4h12a2 2 0 012 2v14H4V6a2 2 0 012-2z"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </div>
-                            <h3 class="font-bold text-[13px] sm:text-base text-white leading-snug">Porsi Fleksibel</h3>
-                            <p class="mt-2 text-[10px] sm:text-xs leading-relaxed text-white/55">
+                            <h3 class="font-bold text-[13px] sm:text-base text-slate-800 dark:text-white leading-snug">Porsi Fleksibel</h3>
+                            <p class="mt-2 text-[10px] sm:text-xs leading-relaxed text-slate-500 dark:text-white/55">
                                 Bisa disesuaikan untuk acara kecil sampai besar.
                             </p>
                     </div>
 
-                        <div class="group min-h-[135px] p-4 sm:p-6 border-r sm:border-b-0 border-white/5" style="background:rgba(0,0,0,0.20);">
+                        <div class="group min-h-[135px] p-4 sm:p-6 border-r sm:border-b-0 border-slate-200 dark:border-white/5 bg-slate-50/30 dark:bg-black/20">
                         <p
                             class="hidden">
                             <span data-target="10">0</span>+
@@ -452,33 +414,33 @@
                             
                         </p>
                             <div
-                                class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#ffdc43]/15 text-[#ffdc43] flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                                class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-100 dark:bg-[#ffdc43]/15 text-amber-600 dark:text-[#ffdc43] flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path d="M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7m16 0H4m16 0l-2-6H6l-2 6m5 0v9m6-9v9"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </div>
-                            <h3 class="font-bold text-[13px] sm:text-base text-white leading-snug">Packing Rapi</h3>
-                            <p class="mt-2 text-[10px] sm:text-xs leading-relaxed text-white/55">
+                            <h3 class="font-bold text-[13px] sm:text-base text-slate-800 dark:text-white leading-snug">Packing Rapi</h3>
+                            <p class="mt-2 text-[10px] sm:text-xs leading-relaxed text-slate-500 dark:text-white/55">
                                 Kemasan siap dibawa dan tetap nyaman disajikan.
                             </p>
                     </div>
-                        <div class="group min-h-[135px] p-4 sm:p-6" style="background:rgba(0,0,0,0.16);">
+                        <div class="group min-h-[135px] p-4 sm:p-6 bg-slate-50/20 dark:bg-black/16">
                             <div
-                                class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#c4b5fd]/15 text-[#c4b5fd] flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                                class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-violet-100 dark:bg-[#c4b5fd]/15 text-violet-600 dark:text-[#c4b5fd] flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path d="M12 8v5l3 2m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </div>
-                            <h3 class="font-bold text-[13px] sm:text-base text-white leading-snug">Jadwal Terarah</h3>
-                            <p class="mt-2 text-[10px] sm:text-xs leading-relaxed text-white/55">
+                            <h3 class="font-bold text-[13px] sm:text-base text-slate-800 dark:text-white leading-snug">Jadwal Terarah</h3>
+                            <p class="mt-2 text-[10px] sm:text-xs leading-relaxed text-slate-500 dark:text-white/55">
                                 Produksi dan pengantaran dirapikan sejak awal.
                             </p>
                         </div>
+                    </div>
                 </div>
             </div>
-        </div>
         </div>
     </header>
 
@@ -594,7 +556,9 @@
                             'price' => number_format($menu->price, 0, ',', '.'),
                             'image_url' => $menu->image_url ? asset($menu->image_url) : 'https://images.unsplash.com/photo-1547592166-23ac45744acd?q=80&w=800',
                             'is_available' => $menu->is_available,
-                            'is_featured' => $menu->is_featured
+                            'is_featured' => $menu->is_featured,
+                            'rating' => (float)$menu->rating,
+                            'sold' => (int)$menu->sold
                         ]) }}">
 
                         <!-- Image Container -->
@@ -649,8 +613,15 @@
                                     class="text-sm sm:text-xl font-poppins font-black text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300 line-clamp-1">
                                     {{ $menu->name }}
                                 </h4>
+                                <!-- Rating and Sold (GrabFood Style) -->
+                                <div class="flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                    <span class="text-amber-500">⭐</span>
+                                    <span class="font-bold text-slate-800 dark:text-slate-200">{{ number_format($menu->rating, 1) }}</span>
+                                    <span class="text-slate-300 dark:text-slate-600">•</span>
+                                    <span>{{ $menu->sold > 0 ? $menu->sold . '+' : '0' }} terjual</span>
+                                </div>
                                 <p
-                                    class="text-[9px] sm:text-xs font-medium leading-relaxed line-clamp-1 sm:line-clamp-2 text-slate-500 dark:text-white/50">
+                                    class="text-[9px] sm:text-xs font-medium leading-relaxed line-clamp-1 sm:line-clamp-2 text-slate-500 dark:text-white/50 mt-1">
                                     {{ $menu->description }}
                                 </p>
                             </div>
@@ -942,29 +913,50 @@
                         <label class="block text-xs sm:text-sm font-bold text-slate-500 dark:text-white/70">Tipe
                             Layanan</label>
                         <!-- Calculator Type Buttons -->
-                        <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-8" id="calc-btn-container">
+                        <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 mb-4" id="calc-btn-container">
                             <button onclick="setCalcType('prasmanan')"
-                                class="calc-type-btn active py-2.5 sm:py-4 px-1 sm:px-2 rounded-xl sm:rounded-2xl text-center transition-all duration-200 border-2 border-emerald-500 bg-emerald-50 dark:border-emerald-500/50 dark:bg-emerald-500/10 shadow-sm"
+                                class="calc-type-btn active py-2.5 sm:py-3 px-1 rounded-xl text-center transition-all duration-200 border-2 border-emerald-500 bg-emerald-50 dark:border-emerald-500/50 dark:bg-emerald-500/10 shadow-sm"
                                 data-type="prasmanan">
-                                <span class="text-base sm:text-xl block mb-0.5 sm:mb-1">🍱</span>
+                                <span class="text-sm sm:text-lg block mb-0.5">🍱</span>
                                 <span
-                                    class="block text-[8px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400">Prasmanan</span>
+                                    class="block text-[8px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Prasmanan</span>
                             </button>
                             <button onclick="setCalcType('box')"
-                                class="calc-type-btn py-2.5 sm:py-4 px-1 sm:px-2 rounded-xl sm:rounded-2xl text-center transition-all duration-200 border-2 border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none"
+                                class="calc-type-btn py-2.5 sm:py-3 px-1 rounded-xl text-center transition-all duration-200 border-2 border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none"
                                 data-type="box">
-                                <span class="text-base sm:text-xl block mb-0.5 sm:mb-1">📦</span>
-                                <span class="block text-[8px] sm:text-xs font-bold text-slate-500 dark:text-white/50">Nasi
+                                <span class="text-sm sm:text-lg block mb-0.5">📦</span>
+                                <span class="block text-[8px] sm:text-[10px] font-bold text-slate-500 dark:text-white/50">Nasi
                                     Box</span>
                             </button>
                             <button onclick="setCalcType('snack')"
-                                class="calc-type-btn py-2.5 sm:py-4 px-1 sm:px-2 rounded-xl sm:rounded-2xl text-center transition-all duration-200 border-2 border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none"
+                                class="calc-type-btn py-2.5 sm:py-3 px-1 rounded-xl text-center transition-all duration-200 border-2 border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none"
                                 data-type="snack">
-                                <span class="text-base sm:text-xl block mb-0.5 sm:mb-1">🧁</span>
-                                <span class="block text-[8px] sm:text-xs font-bold text-slate-500 dark:text-white/50">Snack
+                                <span class="text-sm sm:text-lg block mb-0.5">🧁</span>
+                                <span class="block text-[8px] sm:text-[10px] font-bold text-slate-500 dark:text-white/50">Snack
                                     Box</span>
                             </button>
+                            <button onclick="setCalcType('tumpeng')"
+                                class="calc-type-btn py-2.5 sm:py-3 px-1 rounded-xl text-center transition-all duration-200 border-2 border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none"
+                                data-type="tumpeng">
+                                <span class="text-sm sm:text-lg block mb-0.5">🎋</span>
+                                <span class="block text-[8px] sm:text-[10px] font-bold text-slate-500 dark:text-white/50">Tumpeng</span>
+                            </button>
+                            <button onclick="setCalcType('lainnya')"
+                                class="calc-type-btn py-2.5 sm:py-3 px-1 rounded-xl text-center transition-all duration-200 border-2 border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none"
+                                data-type="lainnya">
+                                <span class="text-sm sm:text-lg block mb-0.5">🎁</span>
+                                <span class="block text-[8px] sm:text-[10px] font-bold text-slate-500 dark:text-white/50">Paket Lain</span>
+                            </button>
                         </div>
+                    </div>
+
+                    <!-- Package select -->
+                    <div class="space-y-2" id="calc-package-container">
+                        <label class="block text-xs sm:text-sm font-bold text-slate-500 dark:text-white/70">Pilih Paket / Menu</label>
+                        <select id="calc-package" onchange="calculatePortions()"
+                            class="w-full px-4 py-3 rounded-xl text-xs sm:text-sm font-bold outline-none transition-all bg-slate-50 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:border-emerald-500 dark:focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10">
+                            <!-- Dynamically loaded -->
+                        </select>
                     </div>
 
                     <!-- Calculate button -->
@@ -991,7 +983,7 @@
                             <div class="font-poppins font-extrabold text-emerald-500 drop-shadow-sm dark:drop-shadow-[0_0_20px_rgba(34,197,94,0.4)]"
                                 id="result-total" style="font-size:clamp(2.5rem,12vw,6rem);line-height:1;">
                                 150</div>
-                            <p class="mt-1 text-[10px] sm:text-base font-semibold text-slate-600 dark:text-white/50">Total
+                            <p class="mt-1 text-[10px] sm:text-base font-semibold text-slate-600 dark:text-white/50" id="result-total-label">Total
                                 Porsi Disarankan</p>
                         </div>
 
@@ -999,13 +991,13 @@
                         <div class="space-y-2 sm:space-y-3">
                             <div
                                 class="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10">
-                                <span class="text-[11px] sm:text-sm text-slate-600 dark:text-white/50">🍛 Lauk Utama</span>
+                                <span class="text-[11px] sm:text-sm text-slate-600 dark:text-white/50" id="result-main-label">🍛 Lauk Utama</span>
                                 <span class="font-bold text-[11px] sm:text-sm text-emerald-600 dark:text-emerald-400"
                                     id="result-main">150 Porsi</span>
                             </div>
                             <div
                                 class="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10">
-                                <span class="text-[11px] sm:text-sm text-slate-600 dark:text-white/50">🥤 Minuman &
+                                <span class="text-[11px] sm:text-sm text-slate-600 dark:text-white/50" id="calc-side-label">🥤 Minuman &
                                     Dessert</span>
                                 <span class="font-bold text-[11px] sm:text-sm text-orange-500 dark:text-orange-400"
                                     id="result-side">200 porsi</span>
@@ -1017,6 +1009,11 @@
                                 <span class="font-bold text-[11px] sm:text-sm text-blue-500 dark:text-blue-400"
                                     id="result-buffer">10%</span>
                             </div>
+                        </div>
+
+                        <!-- Description Box -->
+                        <div id="calc-package-desc-container" class="mt-4 p-3.5 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 text-[10px] sm:text-xs text-slate-500 dark:text-white/60 text-left leading-relaxed hidden">
+                            <strong class="text-slate-800 dark:text-white">Detail Paket:</strong> <span id="calc-package-desc"></span>
                         </div>
 
                         <!-- Total cost -->
@@ -1624,7 +1621,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         @php
                             $waPhone = isset($contents['phone']) ? preg_replace('/[^0-9]/', '', $contents['phone']) : '628123456789';
-                            $emailAddress = $contents['email'] ?? 'admin@aishcatering.com';
+                            $emailAddress = $contents['email'] ?? 'aishcatering2@gmail.com';
                         @endphp
                         <a href="https://wa.me/{{ $waPhone }}" target="_blank"
                             class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-green-500/5 dark:from-emerald-500/20 dark:to-green-500/10 border border-emerald-500/20 hover:border-emerald-500/50 hover:bg-emerald-500 hover:text-white dark:hover:bg-emerald-500 dark:hover:text-white hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 group">
@@ -2414,9 +2411,96 @@
         });
         // Portion Calculator Logic
         let currentCalcType = 'prasmanan';
+        const dbMenus = @json($allMenus);
+
+        const defaultPackages = {
+            prasmanan: [
+                { name: 'Prasmanan Paket A (Standard)', price: 65000, description: 'Nasi putih, 1 lauk utama (ayam/ikan), 1 sayur, sambal, kerupuk, air mineral.' },
+                { name: 'Prasmanan Paket B (Premium)', price: 85000, description: 'Nasi putih, 2 lauk utama (ayam & daging/kakap), 1 sayur, sup, hidangan sampingan, es buah, sambal, kerupuk.' },
+                { name: 'Prasmanan Paket C (Luxury)', price: 120000, description: 'Lengkap dengan sup kimlo, rendang daging sapi, kakap asam manis, hidangan pembuka/karedok, pudding, aneka es, buah potong.' }
+            ],
+            box: [
+                { name: 'Nasi Box Paket A (Standard)', price: 20000, description: 'Nasi putih, ayam goreng/bakar, mie goreng, lalapan, sambal.' },
+                { name: 'Nasi Box Paket B (Premium)', price: 25000, description: 'Nasi putih, ayam/daging sapi lada hitam, telur balado, capcay, kerupuk, buah.' },
+                { name: 'Nasi Box Paket C (Luxury)', price: 35000, description: 'Nasi kuning/putih, ayam bakar, sambal terasi, rendang daging, tahu tempe, lalap, buah, kerupuk, air mineral.' }
+            ],
+            snack: [
+                { name: 'Snack Box Paket A (Hemat)', price: 10000, description: '2 jenis kue tradisional/modern (contoh: risol & bolu gulung), air mineral cup.' },
+                { name: 'Snack Box Paket B (Standard)', price: 15000, description: '3 jenis kue (lemper ayam, risoles rogout, lapis legit), air mineral cup.' },
+                { name: 'Snack Box Paket C (Premium)', price: 20000, description: '4 jenis kue premium (pastry, sus buah, pastel telur, lemper), air mineral cup.' }
+            ],
+            tumpeng: [
+                { name: 'Tumpeng Paket A (Porsi 10 Orang)', price: 140000, description: 'Tumpeng mini/kecil dengan ayam kuning, orek tempe, perkedel, mie, telur dadar iris, sambal.' },
+                { name: 'Tumpeng Paket B (Porsi 20 Orang)', price: 260000, description: 'Tumpeng sedang dengan ayam goreng, telur balado, perkedel, tempe orek, mie goreng, urap sayur, sambal goreng ati.' },
+                { name: 'Tumpeng Paket C (Porsi 30 Orang)', price: 370000, description: 'Tumpeng jumbo/mewah lengkap dengan ayam ingkung, telur balado, perkedel kentang, tempe orek, mie goreng jawa, urap sayuran, sambal goreng ati, emping.' }
+            ],
+            lainnya: [
+                { name: 'Paket Aqiqah Sederhana', price: 1800000, description: '1 ekor kambing matang (sate & gulai), nasi kotak standar untuk 50 porsi.' },
+                { name: 'Paket Aqiqah Lengkap', price: 2500000, description: '1 ekor kambing matang, nasi kotak premium untuk 100 porsi, sertifikat aqiqah, dokumentasi.' },
+                { name: 'Paket Lauk Pauk Pesta', price: 40000, description: 'Custom porsi lauk pauk (ayam, sapi, ikan) untuk tambahan konsumsi acara.' }
+            ]
+        };
+
+        function updatePackageDropdown() {
+            const selectEl = document.getElementById('calc-package');
+            if (!selectEl) return;
+            selectEl.innerHTML = '';
+
+            // 1. Get database menus for the selected type
+            let filteredDbMenus = [];
+            if (dbMenus && dbMenus.length > 0) {
+                filteredDbMenus = dbMenus.filter(menu => {
+                    const cat = menu.category.toLowerCase();
+                    if (currentCalcType === 'prasmanan') {
+                        return cat.includes('prasmanan');
+                    } else if (currentCalcType === 'box') {
+                        return cat.includes('box') || cat.includes('kotak');
+                    } else if (currentCalcType === 'snack') {
+                        return cat.includes('snack');
+                    } else if (currentCalcType === 'tumpeng') {
+                        return cat.includes('tumpeng');
+                    } else {
+                        return cat.includes('lauk') || cat.includes('aqiqah') || cat.includes('hemat') || cat.includes('lain');
+                    }
+                });
+            }
+
+            // 2. Add database menus to options
+            if (filteredDbMenus.length > 0) {
+                const optGroupDb = document.createElement('optgroup');
+                optGroupDb.label = 'Menu Utama Restoran';
+                filteredDbMenus.forEach(menu => {
+                    const opt = document.createElement('option');
+                    opt.value = `db_${menu.id}`;
+                    opt.text = `${menu.name} - ${formatRupiah(menu.price)}`;
+                    opt.setAttribute('data-price', menu.price);
+                    opt.setAttribute('data-description', menu.description || 'Sajian lezat menu pilihan AISH Catering.');
+                    optGroupDb.appendChild(opt);
+                });
+                selectEl.appendChild(optGroupDb);
+            }
+
+            // 3. Add default/fallback packages
+            const defaults = defaultPackages[currentCalcType] || [];
+            if (defaults.length > 0) {
+                const optGroupDefault = document.createElement('optgroup');
+                optGroupDefault.label = 'Paket Standar AISH';
+                defaults.forEach((pkg, index) => {
+                    const opt = document.createElement('option');
+                    opt.value = `default_${currentCalcType}_${index}`;
+                    opt.text = `${pkg.name} - ${formatRupiah(pkg.price)}`;
+                    opt.setAttribute('data-price', pkg.price);
+                    opt.setAttribute('data-description', pkg.description || '');
+                    optGroupDefault.appendChild(opt);
+                });
+                selectEl.appendChild(optGroupDefault);
+            }
+        }
 
         function setCalcType(type) {
             currentCalcType = type;
+            localStorage.setItem('calc_type', currentCalcType);
+            localStorage.removeItem('calc_package');
             document.querySelectorAll('.calc-type-btn').forEach(btn => {
                 const isActive = btn.getAttribute('data-type') === type;
                 btn.classList.toggle('active', isActive);
@@ -2424,13 +2508,14 @@
                 const label = btn.querySelector('span:last-child');
 
                 if (isActive) {
-                    btn.className = 'calc-type-btn active py-2.5 sm:py-4 px-1 sm:px-2 rounded-xl sm:rounded-2xl text-center transition-all duration-200 border-2 border-emerald-500 bg-emerald-50 dark:border-emerald-500/50 dark:bg-emerald-500/10 shadow-sm';
-                    if (label) label.className = 'block text-[8px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400';
+                    btn.className = 'calc-type-btn active py-2.5 sm:py-3 px-1 rounded-xl text-center transition-all duration-200 border-2 border-emerald-500 bg-emerald-50 dark:border-emerald-500/50 dark:bg-emerald-500/10 shadow-sm';
+                    if (label) label.className = 'block text-[8px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400';
                 } else {
-                    btn.className = 'calc-type-btn py-2.5 sm:py-4 px-1 sm:px-2 rounded-xl sm:rounded-2xl text-center transition-all duration-200 border-2 border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none';
-                    if (label) label.className = 'block text-[8px] sm:text-xs font-bold text-slate-500 dark:text-white/50';
+                    btn.className = 'calc-type-btn py-2.5 sm:py-3 px-1 rounded-xl text-center transition-all duration-200 border-2 border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none';
+                    if (label) label.className = 'block text-[8px] sm:text-[10px] font-bold text-slate-500 dark:text-white/50';
                 }
             });
+            updatePackageDropdown();
             calculatePortions();
         }
 
@@ -2447,38 +2532,125 @@
             const guestInput = document.getElementById('calc-guests');
             const guests = parseInt(guestInput.value) || 0;
 
+            const selectEl = document.getElementById('calc-package');
+            if (!selectEl) return;
+
+            const selectedOpt = selectEl.options[selectEl.selectedIndex];
+            let unitPrice = 0;
+            let description = '';
+
+            if (selectedOpt) {
+                unitPrice = parseInt(selectedOpt.getAttribute('data-price')) || 0;
+                description = selectedOpt.getAttribute('data-description') || '';
+            }
+
             let total = 0;
             let side = 0;
             let buffer = "10%";
-            let unitPrice = 0;
 
             if (currentCalcType === 'prasmanan') {
                 total = Math.ceil(guests * 1.5);
                 side = Math.ceil(guests * 2);
-                unitPrice = 85000;
                 buffer = "10%";
             } else if (currentCalcType === 'box') {
                 total = guests;
                 side = guests;
-                unitPrice = 25000;
                 buffer = "5%";
             } else if (currentCalcType === 'snack') {
                 total = Math.ceil(guests * 2);
                 side = guests;
-                unitPrice = 15000;
+                buffer = "5%";
+            } else if (currentCalcType === 'tumpeng') {
+                total = guests;
+                side = Math.ceil(guests / 10);
+                buffer = "5%";
+            } else {
+                total = guests;
+                side = guests;
                 buffer = "5%";
             }
 
-            const totalPrice = total * unitPrice;
+            // Update labels dynamically based on service type
+            const sideLabel = document.getElementById('calc-side-label');
+            if (sideLabel) {
+                if (currentCalcType === 'tumpeng') {
+                    sideLabel.innerText = "🎋 Estimasi Jumlah Tumpeng";
+                } else if (currentCalcType === 'snack') {
+                    sideLabel.innerText = "🥤 Air Mineral & Cup";
+                } else {
+                    sideLabel.innerText = "🥤 Minuman & Dessert";
+                }
+            }
 
-            // Update UI with animation
-            animateValue("result-total", parseInt(document.getElementById('result-total').innerText) || 0, total, 500);
-            document.getElementById('result-main').innerText = total + " Porsi";
-            document.getElementById('result-side').innerText = side + " Porsi";
+            const sideValEl = document.getElementById('result-side');
+            if (sideValEl) {
+                if (currentCalcType === 'tumpeng') {
+                    sideValEl.innerText = side + " Tumpeng (Porsi 10)";
+                } else {
+                    sideValEl.innerText = side + " Porsi";
+                }
+            }
+
+            // Estimate total price
+            let totalPrice = 0;
+            if (currentCalcType === 'tumpeng') {
+                // If it is a Tumpeng, check package porsi size (e.g. 10, 20, 30) from the option text
+                let porsiSize = 10;
+                if (selectedOpt) {
+                    const match = selectedOpt.text.match(/porsi\s*(\d+)/i);
+                    if (match) {
+                        porsiSize = parseInt(match[1]) || 10;
+                    }
+                }
+                const qtyNeeded = Math.ceil(guests / porsiSize);
+                totalPrice = qtyNeeded * unitPrice;
+
+                animateValue("result-total", parseInt(document.getElementById('result-total').innerText) || 0, qtyNeeded, 500);
+                document.getElementById('result-main').innerText = qtyNeeded + " Tumpeng (" + porsiSize + " Porsi/Tumpeng)";
+                document.getElementById('result-main-label').innerText = "🎋 Jumlah Tumpeng";
+                document.getElementById('result-total-label').innerText = "Total Tumpeng Disarankan";
+            } else if (currentCalcType === 'lainnya' && selectedOpt && selectedOpt.text.toLowerCase().includes('aqiqah')) {
+                // Aqiqah packages are priced flat per unit/package (usually 1 or 2 goats)
+                let porsiSize = 50;
+                if (selectedOpt.text.toLowerCase().includes('100 porsi') || description.toLowerCase().includes('100 porsi')) {
+                    porsiSize = 100;
+                }
+                const qtyNeeded = Math.ceil(guests / porsiSize);
+                totalPrice = qtyNeeded * unitPrice;
+
+                animateValue("result-total", parseInt(document.getElementById('result-total').innerText) || 0, qtyNeeded, 500);
+                document.getElementById('result-main').innerText = qtyNeeded + " Paket Aqiqah (" + porsiSize + " Porsi/Paket)";
+                document.getElementById('result-main-label').innerText = "🐑 Jumlah Paket";
+                document.getElementById('result-total-label').innerText = "Total Paket Disarankan";
+            } else {
+                totalPrice = total * unitPrice;
+                animateValue("result-total", parseInt(document.getElementById('result-total').innerText) || 0, total, 500);
+                document.getElementById('result-main').innerText = total + " Porsi";
+                document.getElementById('result-main-label').innerText = "🍛 Lauk Utama";
+                document.getElementById('result-total-label').innerText = "Total Porsi Disarankan";
+            }
+
+            // Display package description
+            const descEl = document.getElementById('calc-package-desc');
+            const descContainer = document.getElementById('calc-package-desc-container');
+            if (descEl && descContainer) {
+                descEl.innerText = description;
+                if (description) {
+                    descContainer.classList.remove('hidden');
+                } else {
+                    descContainer.classList.add('hidden');
+                }
+            }
+
             document.getElementById('result-buffer').innerText = buffer;
-
-            // Update Price with currency formatting
             document.getElementById('result-price').innerText = formatRupiah(totalPrice);
+
+            // Persist selections to localStorage
+            localStorage.setItem('calc_guests', guests);
+            localStorage.setItem('calc_type', currentCalcType);
+            if (selectedOpt) {
+                localStorage.setItem('calc_package', selectedOpt.value);
+            }
         }
 
         function animateValue(id, start, end, duration) {
@@ -2505,7 +2677,47 @@
             run();
         }
 
-        // Initialize Calculator
+        // Initialize Calculator with LocalStorage persistence
+        const savedGuests = localStorage.getItem('calc_guests');
+        const savedType = localStorage.getItem('calc_type');
+        const savedPackage = localStorage.getItem('calc_package');
+
+        if (savedGuests) {
+            document.getElementById('calc-guests').value = savedGuests;
+        }
+
+        if (savedType) {
+            currentCalcType = savedType;
+            document.querySelectorAll('.calc-type-btn').forEach(btn => {
+                const isActive = btn.getAttribute('data-type') === currentCalcType;
+                btn.classList.toggle('active', isActive);
+
+                const label = btn.querySelector('span:last-child');
+
+                if (isActive) {
+                    btn.className = 'calc-type-btn active py-2.5 sm:py-3 px-1 rounded-xl text-center transition-all duration-200 border-2 border-emerald-500 bg-emerald-50 dark:border-emerald-500/50 dark:bg-emerald-500/10 shadow-sm';
+                    if (label) label.className = 'block text-[8px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400';
+                } else {
+                    btn.className = 'calc-type-btn py-2.5 sm:py-3 px-1 rounded-xl text-center transition-all duration-200 border-2 border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20 shadow-sm dark:shadow-none';
+                    if (label) label.className = 'block text-[8px] sm:text-[10px] font-bold text-slate-500 dark:text-white/50';
+                }
+            });
+        }
+
+        updatePackageDropdown();
+
+        if (savedPackage) {
+            const selectEl = document.getElementById('calc-package');
+            if (selectEl) {
+                for (let i = 0; i < selectEl.options.length; i++) {
+                    if (selectEl.options[i].value === savedPackage) {
+                        selectEl.value = savedPackage;
+                        break;
+                    }
+                }
+            }
+        }
+
         calculatePortions();
 
         // Add real-time listener
@@ -3153,7 +3365,14 @@
                     return;
                 }
 
-                const menu = JSON.parse(menuDataRaw);
+                let menu = {};
+                try {
+                    menu = JSON.parse(menuDataRaw);
+                } catch (e) {
+                    console.error('Error parsing menu JSON data:', e);
+                    return;
+                }
+
                 const name = menu.name || '';
                 const category = menu.category || '';
                 const description = menu.description || '';
@@ -3161,6 +3380,8 @@
                 const image = menu.image_url || '';
                 const isAvailable = menu.is_available === true || menu.is_available === 1 || menu.is_available === '1';
                 const isFeatured = menu.is_featured === true || menu.is_featured === 1 || menu.is_featured === '1';
+                const rating = parseFloat(menu.rating) || 5.0;
+                const sold = parseInt(menu.sold) || 0;
 
                 // Set content safely
                 const nameEl = document.getElementById('modal-menu-name');
@@ -3177,6 +3398,12 @@
                     imgEl.src = image;
                     imgEl.alt = name;
                 }
+
+                const ratingEl = document.getElementById('modal-menu-rating');
+                if (ratingEl) ratingEl.textContent = rating.toFixed(1);
+
+                const soldEl = document.getElementById('modal-menu-sold');
+                if (soldEl) soldEl.textContent = sold > 0 ? `${sold}+ terjual` : '0 terjual';
 
                 // Set current menu name for operations (Save, Share, Report)
                 if (modalContent) {
@@ -3212,7 +3439,15 @@
                 }
 
                 // Check and set Saved/Liked status
-                const likedMenus = JSON.parse(localStorage.getItem('liked_menus') || '{}');
+                let likedMenus = {};
+                try {
+                    likedMenus = JSON.parse(localStorage.getItem('liked_menus') || '{}');
+                    if (typeof likedMenus !== 'object' || likedMenus === null) {
+                        likedMenus = {};
+                    }
+                } catch (e) {
+                    likedMenus = {};
+                }
                 const heartIcon = document.getElementById('modal-heart-icon');
                 const btnSave = document.getElementById('modal-btn-save');
                 const btnSaveText = btnSave ? btnSave.querySelector('span') : null;
@@ -3259,13 +3494,12 @@
                     }
                 }
 
-                // Animate Modal Open
-                menuModal.classList.remove('opacity-0', 'pointer-events-none');
-                menuModal.classList.add('opacity-100', 'pointer-events-auto');
+                // Animate Modal Open — use inline styles to bypass Tailwind purge
+                menuModal.style.opacity = '1';
+                menuModal.style.pointerEvents = 'auto';
 
                 if (modalContent) {
-                    modalContent.classList.remove('translate-y-full', 'sm:scale-95');
-                    modalContent.classList.add('translate-y-0', 'sm:scale-100');
+                    modalContent.style.transform = 'translateY(0)';
                 }
 
                 // Lock scroll
@@ -3281,12 +3515,11 @@
                 if (!menuModal) return;
                 const modalContent = document.getElementById('modal-content');
 
-                menuModal.classList.add('opacity-0', 'pointer-events-none');
-                menuModal.classList.remove('opacity-100', 'pointer-events-auto');
+                menuModal.style.opacity = '0';
+                menuModal.style.pointerEvents = 'none';
 
                 if (modalContent) {
-                    modalContent.classList.add('translate-y-full', 'sm:scale-95');
-                    modalContent.classList.remove('translate-y-0', 'sm:scale-100');
+                    modalContent.style.transform = 'translateY(100%)';
                 }
 
                 // Unlock scroll
@@ -3450,12 +3683,12 @@
     </script>
 
     <!-- Mobile Bottom Sheet / Desktop Modal HTML -->
-    <div id="menu-detail-modal" class="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-all duration-300">
+    <div id="menu-detail-modal" class="fixed inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all duration-300" style="z-index:1000;opacity:0;pointer-events:none;">
         <!-- Backdrop overlay -->
-        <div id="modal-overlay" class="absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity duration-300"></div>
+        <div id="modal-overlay" class="absolute inset-0 transition-opacity duration-300" style="background:rgba(15,23,42,0.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);"></div>
 
         <!-- Modal Content Window -->
-        <div id="modal-content" class="relative w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2rem] overflow-hidden shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-300 max-h-[92vh] sm:max-h-[85vh] flex flex-col border border-slate-100 dark:border-white/5">
+        <div id="modal-content" class="relative w-full sm:max-w-md bg-white dark:bg-slate-900 overflow-hidden shadow-2xl flex flex-col border border-slate-100 dark:border-white/5" style="border-radius:2.5rem 2.5rem 0 0;max-height:92vh;transform:translateY(100%);transition:transform 0.3s ease;">
             <!-- Mobile Drag Handle -->
             <div class="sm:hidden w-full flex justify-center py-4 cursor-pointer" onclick="closeMenuDetail()">
                 <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
@@ -3484,12 +3717,27 @@
                         Nama Menu
                     </h3>
                     
+                    <!-- Rating and Sold Row (GrabFood Style) -->
+                    <div id="modal-menu-rating-row" class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                        <div class="flex items-center gap-1">
+                            <svg class="w-4 h-4 text-amber-500 fill-current" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <span id="modal-menu-rating" class="font-bold text-slate-900 dark:text-white">0.0</span>
+                        </div>
+                        <span class="text-slate-300 dark:text-slate-700">•</span>
+                        <span id="modal-menu-sold">0 terjual</span>
+                    </div>
+
                     <p id="modal-menu-description" class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                         Deskripsi menu lengkap.
                     </p>
 
-                    <div id="modal-menu-price" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-                        0
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">Rp</span>
+                        <span id="modal-menu-price" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                            0
+                        </span>
                     </div>
 
                     <div class="flex items-center gap-2 pt-1">

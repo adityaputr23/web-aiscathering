@@ -174,7 +174,8 @@
                         <span class="inline-block text-[9px] font-black px-2 py-0.5 rounded uppercase mt-1
                             {{ in_array($order->status, ['Selesai','COMPLETED']) ? 'bg-emerald-500/20 text-emerald-400' :
                                ($order->status == 'Dikirim' ? 'bg-orange-500/20 text-orange-400' :
-                               ($order->status == 'Diproses' ? 'bg-blue-500/20 text-blue-400' : 'bg-yellow-500/20 text-yellow-400')) }}">
+                               (in_array($order->status, ['Diproses','PROCESSING','Diterima']) ? 'bg-blue-500/20 text-blue-400' : 
+                               (in_array($order->status, ['Dibatalkan','CANCELLED','Ditolak']) ? 'bg-rose-500/20 text-rose-400' : 'bg-yellow-500/20 text-yellow-400'))) }}">
                             {{ $order->status }}
                         </span>
                     </div>
@@ -274,7 +275,12 @@
     dynamicGreeting();
 
     // --- Real-time Orders Sync ---
-    let lastOrderCount = {{ count($latest_orders) }};
+    const initialOrders = {
+        @foreach($latest_orders as $order)
+            "{{ $order->id }}": "{{ $order->status }}",
+        @endforeach
+    };
+    let lastOrderCount = {{ $stats['total_orders'] }};
     let lastOrderId = {{ count($latest_orders) > 0 ? $latest_orders[0]->id : 0 }};
     const orderAudio = new Audio('/mixkit-bell-notification-933.wav');
 
@@ -285,17 +291,37 @@
             const orders = data.orders;
             const stats = data.stats;
             
-            if (orders.length > 0 && orders[0].id > lastOrderId) {
-                // New order detected!
+            let needsReload = false;
+
+            // 1. Check if total order count has changed (new or deleted order)
+            if (stats && stats.total_orders !== lastOrderCount) {
+                needsReload = true;
+            }
+
+            // 2. Check if the status of any latest order has changed
+            if (orders && orders.length > 0) {
+                orders.forEach(order => {
+                    const currentStatus = initialOrders[order.id];
+                    if (currentStatus !== undefined && currentStatus !== order.status) {
+                        needsReload = true;
+                    }
+                });
+            }
+
+            if (needsReload) {
                 orderAudio.play().catch(e => console.log("Audio play blocked"));
-                lastOrderId = orders[0].id;
                 
                 if (Notification.permission === "granted") {
-                    new Notification("Pesanan Baru!", {
-                        body: `Pesanan dari ${orders[0].user_email} baru saja masuk.`,
+                    new Notification("Pembaruan Dashboard!", {
+                        body: `Data dashboard telah diperbarui secara otomatis.`,
                         icon: "/favicon.ico"
                     });
                 }
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+                return;
             }
 
             // Update Sync Status Bars
@@ -323,7 +349,8 @@
                 let statusClass = 'bg-yellow-500/20 text-yellow-400';
                 if (['Selesai', 'COMPLETED'].includes(order.status)) statusClass = 'bg-emerald-500/20 text-emerald-400';
                 else if (order.status === 'Dikirim') statusClass = 'bg-orange-500/20 text-orange-400';
-                else if (order.status === 'Diproses') statusClass = 'bg-blue-500/20 text-blue-400';
+                else if (['Diproses', 'PROCESSING', 'Diterima'].includes(order.status)) statusClass = 'bg-blue-500/20 text-blue-400';
+                else if (['Dibatalkan', 'CANCELLED', 'Ditolak'].includes(order.status)) statusClass = 'bg-rose-500/20 text-rose-400';
 
                 html += `
                 <div class="bg-[var(--bg-card)] border border-[var(--border)] hover:border-blue-500/20 p-4 rounded-2xl flex items-center justify-between transition duration-300 shadow-sm animate-in slide-in-from-right">
@@ -350,7 +377,18 @@
         Notification.requestPermission();
     }
 
-    // Poll every 10 seconds
-    setInterval(updateLatestOrders, 10000);
+    // Subscribe to Laravel Echo orders channel for real-time dashboard updates
+    window.addEventListener('DOMContentLoaded', () => {
+        if (window.Echo) {
+            window.Echo.channel('orders')
+                .listen('.OrderStatusUpdated', (e) => {
+                    console.log("Real-time dashboard update triggered:", e);
+                    window.location.reload();
+                });
+        }
+    });
+
+    // Poll every 5 seconds
+    setInterval(updateLatestOrders, 5000);
 </script>
 @endpush

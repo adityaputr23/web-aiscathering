@@ -21,7 +21,7 @@ class DashboardController extends Controller
         // Data dari tabel orders (Android App)
         $total_orders  = DB::table('orders')->count();
         $active_orders = DB::table('orders')
-            ->whereNotIn('status', ['Selesai', 'Dibatalkan', 'COMPLETED', 'CANCELLED'])
+            ->whereNotIn('status', ['Selesai', 'Dibatalkan', 'COMPLETED', 'CANCELLED', 'Ditolak', 'REJECTED'])
             ->count();
         $selesai_orders = DB::table('orders')
             ->whereIn('status', ['Selesai', 'COMPLETED'])
@@ -39,7 +39,7 @@ class DashboardController extends Controller
 
         // Chat belum dibaca (dari tabel chats Android app)
         $unread_chats = DB::table('chats')
-            ->where('receiver_email', 'admin@aishcatering.com')
+            ->where('receiver_email', 'aishcatering2@gmail.com')
             ->where('is_read', 0)
             ->count();
 
@@ -57,8 +57,8 @@ class DashboardController extends Controller
 
         // Status pesanan breakdown
         $order_stats = [
-            'diproses' => DB::table('orders')->where('status', 'Diproses')->count(),
-            'dikirim'  => DB::table('orders')->where('status', 'Dikirim')->count(),
+            'diproses' => DB::table('orders')->whereIn('status', ['Diproses', 'PROCESSING', 'Diterima', 'ACCEPTED'])->count(),
+            'dikirim'  => DB::table('orders')->whereIn('status', ['Dikirim', 'SHIPPED'])->count(),
             'selesai'  => DB::table('orders')->whereIn('status', ['Selesai', 'COMPLETED'])->count(),
             'pending'  => DB::table('orders')->whereIn('status', ['Pending', 'PENDING'])->count(),
         ];
