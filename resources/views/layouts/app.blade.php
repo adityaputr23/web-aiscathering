@@ -1236,6 +1236,11 @@
                     if (!response.ok) return;
                     const messages = await response.json();
                     
+                    if (messages.length < lastMessageCount) {
+                        chatMessages.innerHTML = '';
+                        lastMessageCount = 0;
+                    }
+                    
                     if (messages.length > lastMessageCount) {
                         const newMessages = messages.slice(lastMessageCount);
                         let hasNewAdminMessage = false;
@@ -1282,8 +1287,27 @@
                 }
             }
 
-            // Start background polling for notifications
-            setInterval(() => fetchMessages(true), 2000);
+            // Initial load and Echo registration
+            window.addEventListener('DOMContentLoaded', () => {
+                fetchMessages(true);
+                
+                if (window.Echo) {
+                    const userEmail = "{{ auth()->check() ? auth()->user()->email : 'guest_' . session()->getId() }}";
+                    window.Echo.channel('chat.' + userEmail)
+                        .listen('.ChatMessageSent', (e) => {
+                            fetchMessages(true);
+                        })
+                        .listen('.ChatMessageDeleted', (e) => {
+                            fetchMessages(true);
+                        })
+                        .listen('.ChatMessageUpdated', (e) => {
+                            fetchMessages(true);
+                        });
+                }
+            });
+
+            // Fallback background polling (every 30 seconds instead of 2 seconds)
+            setInterval(() => fetchMessages(true), 30000);
 
 
             function parseMessageContent(text) {

@@ -303,8 +303,24 @@
     });
 
     // Start polling
-    // Start polling - Reduced to 2s for responsiveness
-    setInterval(pollNewChats, 2000);
+    window.addEventListener('DOMContentLoaded', () => {
+        pollNewChats();
 
+        if (window.Echo) {
+            window.Echo.channel('chats')
+                .listen('.ChatMessageSent', (e) => {
+                    pollNewChats();
+                })
+                .listen('.ChatMessageDeleted', (e) => {
+                    pollNewChats();
+                })
+                .listen('.ChatMessageUpdated', (e) => {
+                    pollNewChats();
+                });
+        }
+    });
+
+    // Fallback poll every 60 seconds
+    setInterval(pollNewChats, 60000);
 </script>
 @endsection

@@ -48,11 +48,6 @@ class SpecialPackageController extends Controller
             $filename = time() . '_' . uniqid() . '.' . $ext;
             $file->move(public_path('uploads/packages'), $filename);
             $data['image'] = 'uploads/packages/' . $filename;
-
-            // Sync to XAMPP API path for Android access
-            $xamppDir = 'C:\\xampp\\htdocs\\aish_api\\uploads\\packages';
-            if (!file_exists($xamppDir)) @mkdir($xamppDir, 0777, true);
-            @copy(public_path('uploads/packages/' . $filename), $xamppDir . '\\' . $filename);
         }
 
         SpecialPackage::create($data);
@@ -93,23 +88,12 @@ class SpecialPackageController extends Controller
                 && file_exists(public_path($specialPackage->image))) {
                 @unlink(public_path($specialPackage->image));
             }
-            // Delete old image from XAMPP path
-            $oldXampp = 'C:\\xampp\\htdocs\\aish_api\\' . ($specialPackage->image ?? '');
-            if ($specialPackage->image && !filter_var($specialPackage->image, FILTER_VALIDATE_URL)
-                && file_exists($oldXampp)) {
-                @unlink($oldXampp);
-            }
 
             $file     = $request->file('image');
             $ext      = $file->extension() ?: $file->getClientOriginalExtension();
             $filename = time() . '_' . uniqid() . '.' . $ext;
             $file->move(public_path('uploads/packages'), $filename);
             $data['image'] = 'uploads/packages/' . $filename;
-
-            // Sync to XAMPP API path for Android access
-            $xamppDir = 'C:\\xampp\\htdocs\\aish_api\\uploads\\packages';
-            if (!file_exists($xamppDir)) @mkdir($xamppDir, 0777, true);
-            @copy(public_path('uploads/packages/' . $filename), $xamppDir . '\\' . $filename);
         }
 
         $specialPackage->update($data);

@@ -57,12 +57,16 @@ class LiveChatController extends Controller
                 'message' => "Pengguna beralih untuk chat dengan admin.",
                 'sender_type' => 'USER',
             ]);
-            Message::create([
+            event(new \App\Events\ChatMessageSent($userMessage));
+
+            $adminReply = Message::create([
                 'sender_email' => 'admin@aishcatering.com',
                 'receiver_email' => $senderEmail,
                 'message' => "Anda sekarang terhubung dengan Admin. Silakan tinggalkan pesan Anda.",
                 'sender_type' => 'ADMIN',
             ]);
+            event(new \App\Events\ChatMessageSent($adminReply));
+
             return response()->json(['status' => 'success', 'message' => $userMessage]);
         }
 
@@ -74,12 +78,16 @@ class LiveChatController extends Controller
                 'message' => "Pengguna beralih untuk chat dengan bot.",
                 'sender_type' => 'USER',
             ]);
-            Message::create([
+            event(new \App\Events\ChatMessageSent($userMessage));
+
+            $adminReply = Message::create([
                 'sender_email' => 'admin@aishcatering.com',
                 'receiver_email' => $senderEmail,
                 'message' => "Anda kembali terhubung dengan Bot AISH.",
                 'sender_type' => 'ADMIN',
             ]);
+            event(new \App\Events\ChatMessageSent($adminReply));
+
             return response()->json(['status' => 'success', 'message' => $userMessage]);
         }
         
@@ -90,6 +98,7 @@ class LiveChatController extends Controller
             'message' => $messageContent,
             'sender_type' => 'USER',
         ]);
+        event(new \App\Events\ChatMessageSent($userMessage));
 
         $mode = session('chat_mode', 'BOT');
 
@@ -286,12 +295,13 @@ class LiveChatController extends Controller
                     $reply = $data['result']['fulfillment'][0]['message'] ?? null;
 
                     if ($reply) {
-                        Message::create([
+                        $botMsg = Message::create([
                             'sender_email' => 'admin@aishcatering.com',
                             'receiver_email' => $senderEmail,
                             'message' => $reply,
                             'sender_type' => 'ADMIN',
                         ]);
+                        event(new \App\Events\ChatMessageSent($botMsg));
                         $replied = true;
                     }
                 } else {
@@ -322,12 +332,13 @@ class LiveChatController extends Controller
                     $reply = $data['answer'] ?? null;
 
                     if ($reply) {
-                        Message::create([
+                        $botMsg = Message::create([
                             'sender_email' => 'admin@aishcatering.com',
                             'receiver_email' => $senderEmail,
                             'message' => $reply,
                             'sender_type' => 'ADMIN',
                         ]);
+                        event(new \App\Events\ChatMessageSent($botMsg));
                         $replied = true;
                     }
                 }
@@ -378,12 +389,13 @@ class LiveChatController extends Controller
                         $reply = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
 
                         if ($reply) {
-                            Message::create([
+                            $botMsg = Message::create([
                                 'sender_email' => 'admin@aishcatering.com',
                                 'receiver_email' => $senderEmail,
                                 'message' => $reply,
                                 'sender_type' => 'ADMIN',
                             ]);
+                            event(new \App\Events\ChatMessageSent($botMsg));
                             $replied = true;
                             break; // Success! Stop trying other models
                         }
@@ -409,12 +421,13 @@ class LiveChatController extends Controller
 
     private function triggerAdminNotification($senderEmail, $userText)
     {
-        Message::create([
+        $botMsg = Message::create([
             'sender_email' => 'admin@aishcatering.com',
             'receiver_email' => $senderEmail,
             'message' => "Maaf, koneksi AI sedang sibuk. Silakan tunggu sebentar atau ketik '/admin' untuk langsung berbicara dengan tim kami.",
             'sender_type' => 'ADMIN',
         ]);
+        event(new \App\Events\ChatMessageSent($botMsg));
     }
 
     // Admin Methods
@@ -498,6 +511,7 @@ class LiveChatController extends Controller
             'message' => $messageContent,
             'sender_type' => 'ADMIN',
         ]);
+        event(new \App\Events\ChatMessageSent($reply));
 
         // Kirim Push Notification ke USER (jika ada token)
         $user = \App\Models\User::where('email', $senderEmail)->first();
@@ -546,13 +560,17 @@ class LiveChatController extends Controller
         $message->update([
             'message' => $request->message . ' (diedit)'
         ]);
+        event(new \App\Events\ChatMessageUpdated($message));
 
         return response()->json(['status' => 'success', 'message' => $message]);
     }
 
     public function deleteMessage(Message $message)
     {
+        $userEmail = $message->sender_type === 'ADMIN' ? $message->receiver_email : $message->sender_email;
+        $messageId = $message->id;
         $message->delete();
+        event(new \App\Events\ChatMessageDeleted($messageId, $userEmail));
         return response()->json(['status' => 'success']);
     }
 
@@ -560,7 +578,10 @@ class LiveChatController extends Controller
     {
         $senderEmail = auth()->check() ? auth()->user()->email : 'guest_' . session()->getId();
         if ($message->sender_email === $senderEmail) {
+            $userEmail = $message->sender_type === 'ADMIN' ? $message->receiver_email : $message->sender_email;
+            $messageId = $message->id;
             $message->delete();
+            event(new \App\Events\ChatMessageDeleted($messageId, $userEmail));
             return response()->json(['status' => 'success']);
         }
         return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);

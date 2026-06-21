@@ -178,10 +178,14 @@ class AndroidApiController extends Controller
             "status" => "success",
             "message" => "Profil berhasil diperbarui",
             "user" => [
-                "name" => $name,
-                "email" => $newEmail,
-                "phone" => $phone,
-                "address" => $address
+                "id" => (int) $user->id,
+                "name" => $user->name,
+                "email" => $user->email,
+                "phone" => $user->phone,
+                "address" => $user->address,
+                "photo" => $user->photo ?? $user->profile_photo,
+                "is_admin" => (bool) $user->is_admin,
+                "is_member" => (bool) $user->is_member
             ]
         ]);
     }
@@ -210,13 +214,13 @@ class AndroidApiController extends Controller
             $fileExt = $file->getClientOriginalExtension();
             $photoName = time() . '_' . uniqid() . '.' . $fileExt;
             
-            // Simpan ke folder uploads/profiles/ di Laravel public/
-            $file->move(public_path('uploads/profiles'), $photoName);
+            // Simpan ke folder uploads/profile/ di Laravel public/
+            $file->move(public_path('uploads/profile'), $photoName);
 
             // Bersihkan foto lama
             $oldPhoto = $user->photo ?? $user->profile_photo;
-            if ($oldPhoto && file_exists(public_path('uploads/profiles/' . $oldPhoto))) {
-                @unlink(public_path('uploads/profiles/' . $oldPhoto));
+            if ($oldPhoto && file_exists(public_path('uploads/profile/' . $oldPhoto))) {
+                @unlink(public_path('uploads/profile/' . $oldPhoto));
             }
         }
 
@@ -233,16 +237,20 @@ class AndroidApiController extends Controller
         }
 
         $user->update($updateData);
+        $user->refresh();
 
         return response()->json([
             "status" => "success",
             "message" => "Profil berhasil diperbarui",
             "user" => [
-                "name" => $name,
-                "email" => $newEmail,
-                "phone" => $phone,
-                "address" => $address,
-                "photo" => $photoName ?? $user->photo
+                "id" => (int) $user->id,
+                "name" => $user->name,
+                "email" => $user->email,
+                "phone" => $user->phone,
+                "address" => $user->address,
+                "photo" => $user->photo ?? $user->profile_photo,
+                "is_admin" => (bool) $user->is_admin,
+                "is_member" => (bool) $user->is_member
             ]
         ]);
     }
@@ -262,8 +270,8 @@ class AndroidApiController extends Controller
         }
 
         $photo = $user->photo ?? $user->profile_photo;
-        if ($photo && file_exists(public_path('uploads/profiles/' . $photo))) {
-            @unlink(public_path('uploads/profiles/' . $photo));
+        if ($photo && file_exists(public_path('uploads/profile/' . $photo))) {
+            @unlink(public_path('uploads/profile/' . $photo));
         }
 
         $user->update([
@@ -429,6 +437,8 @@ class AndroidApiController extends Controller
             'sender_type' => $type,
             'is_read' => 0
         ]);
+
+        event(new \App\Events\ChatMessageSent($msg));
 
         return response()->json(["status" => "success", "message" => "Message sent"]);
     }
@@ -670,6 +680,7 @@ class AndroidApiController extends Controller
         $deleted = Message::where('id', $id)->where('sender_email', $email)->delete();
 
         if ($deleted) {
+            event(new \App\Events\ChatMessageDeleted($id, $email));
             return response()->json(["status" => "success", "message" => "Message deleted"]);
         }
 
@@ -692,6 +703,10 @@ class AndroidApiController extends Controller
         ]);
 
         if ($updated) {
+            $msg = Message::find($id);
+            if ($msg) {
+                event(new \App\Events\ChatMessageUpdated($msg));
+            }
             return response()->json(["status" => "success", "message" => "Message updated"]);
         }
 
@@ -983,5 +998,183 @@ class AndroidApiController extends Controller
         }
 
         return response()->json(["status" => "error", "message" => "Gagal menghapus user"]);
+    }
+
+    public function getWebSocketConfig()
+    {
+        return response()->json([
+            'status' => 'success',
+            'config' => [
+                'host' => env('REVERB_HOST', '127.0.0.1'),
+                'port' => (int)env('REVERB_PORT', 8080),
+                'scheme' => env('REVERB_SCHEME', 'http'),
+                'app_key' => env('REVERB_APP_KEY', 'aishcateringwebsocketkey'),
+                'app_id' => env('REVERB_APP_ID', '123456')
+            ]
+        ]);
+    }
+
+    // POST place_order.php
+    public function placeOrder(Request $request)
+    {
+        // The Android app sends a highly redundant set of params.
+        // We pick the best available value for each field.
+        $orderId      = $request->input('order_id', $request->input('id', $request->input('id_pesanan', '')));
+        $userId       = (int) $request->input('user_id', $request->input('id_user', $request->input('customer_id', 0)));
+        $customerName = $request->input('customer_name', $request->input('name', $request->input('nama_pelanggan', '')));
+        $email        = $request->input('customer_email', $request->input('email', $request->input('user_email', '')));
+        $phone        = $request->input('customer_phone', $request->input('phone', $request->input('nomor_hp', '')));
+        $itemsJson    = $request->input('items_json', $request->input('items', $request->input('cart', $request->input('data_pesanan', '[]'))));
+        $itemsTitle   = $request->input('items_title', 'Pesanan');
+        $itemsSubtitle = $request->input('items_subtitle', '');
+        $totalPrice   = (int) $request->input('total_price', $request->input('total', $request->input('grand_total', 0)));
+        $subtotal     = (int) $request->input('subtotal', $request->input('harga_subtotal', $totalPrice));
+        $shippingCost = (int) $request->input('shipping_cost', $request->input('shipping_fee', $request->input('ongkir', 0)));
+        $discount     = (int) $request->input('discount', $request->input('total_discount', $request->input('potongan', 0)));
+        $memberDiscount = (int) $request->input('member_discount', $request->input('diskon_member', 0));
+        $address      = $request->input('address', $request->input('alamat_pengiriman', ''));
+        $status       = $request->input('status', $request->input('order_status', 'Diproses'));
+        $deliveryDate = $request->input('delivery_date', $request->input('tanggal_pengiriman', ''));
+        $emoji        = $request->input('emoji', '🍱');
+        $paymentMethod = $request->input('payment_method', $request->input('metode_pembayaran', 'COD'));
+
+        // Validate essential fields
+        if (empty($orderId) || empty($email) || $totalPrice <= 0) {
+            Log::warning('placeOrder: Parameter tidak lengkap', $request->all());
+            return response()->json(["status" => "error", "message" => "Parameter tidak lengkap"]);
+        }
+
+        // Prevent duplicate orders
+        $existing = DB::table('orders')->where('order_id', $orderId)->first();
+        if ($existing) {
+            return response()->json(["status" => "success", "message" => "Order sudah tersimpan"]);
+        }
+
+        // If user_id is 0, try to resolve from email
+        if ($userId <= 0 && !empty($email)) {
+            $user = User::where('email', $email)->first();
+            if ($user) {
+                $userId = $user->id;
+            }
+        }
+
+        try {
+            DB::table('orders')->insert([
+                'order_id'        => $orderId,
+                'user_id'         => $userId > 0 ? $userId : null,
+                'user_email'      => $email,
+                'customer_name'   => $customerName,
+                'customer_phone'  => $phone,
+                'items_title'     => $itemsTitle,
+                'items_subtitle'  => $itemsSubtitle,
+                'items_json'      => is_string($itemsJson) ? $itemsJson : json_encode($itemsJson),
+                'emoji'           => $emoji,
+                'total_price'     => $totalPrice,
+                'subtotal'        => $subtotal,
+                'shipping_cost'   => $shippingCost,
+                'discount'        => $discount,
+                'member_discount' => $memberDiscount,
+                'status'          => $status,
+                'shipping_address' => $address,
+                'delivery_date'   => $deliveryDate ?: null,
+                'cancel_reason'   => null,
+                'payment_method'  => $paymentMethod,
+                'payment_status'  => $status === 'Menunggu Pembayaran' ? 'UNPAID' : 'COD',
+                'notified_admin'  => 0,
+                'notified_user'   => 0,
+                'created_at'      => Carbon::now('Asia/Jakarta'),
+                'updated_at'      => Carbon::now('Asia/Jakarta'),
+            ]);
+
+            Log::info("placeOrder: Order $orderId saved successfully for $email");
+            return response()->json(["status" => "success", "message" => "Pesanan berhasil disimpan"]);
+        } catch (\Exception $e) {
+            Log::error("placeOrder: Exception - " . $e->getMessage());
+            return response()->json(["status" => "error", "message" => "Gagal menyimpan pesanan: " . $e->getMessage()]);
+        }
+    }
+
+    // POST get_orders.php
+    public function getOrders(Request $request)
+    {
+        $isAdmin    = $request->input('is_admin', '0') === '1';
+        $userEmail  = $request->input('user_email', '');
+        $adminEmail = $request->input('admin_email', '');
+
+        if (!$isAdmin && empty($userEmail)) {
+            return response()->json(["status" => "error", "message" => "Email required"]);
+        }
+
+        $query = DB::table('orders');
+
+        if (!$isAdmin) {
+            $query->where('user_email', $userEmail);
+        }
+
+        $ordersRaw = $query->orderBy('created_at', 'desc')->get();
+
+        $orders = $ordersRaw->map(function ($row) {
+            return [
+                "id"             => $row->order_id ?? (string) $row->id,
+                "order_id"       => $row->order_id ?? (string) $row->id,
+                "customer_name"  => $row->customer_name ?? $row->user_email,
+                "customer_email" => $row->user_email,
+                "items_title"    => $row->items_title,
+                "items_subtitle" => $row->items_subtitle ?? '',
+                "items_json"     => $row->items_json ?? '[]',
+                "emoji"          => $row->emoji ?? '📦',
+                "total_price"    => (int) $row->total_price,
+                "total"          => (int) $row->total_price,
+                "status"         => $row->status,
+                "address"        => $row->shipping_address ?? '',
+                "delivery_date"  => $row->delivery_date ?? '',
+                "cancel_reason"  => $row->cancel_reason ?? null,
+                "date"           => Carbon::parse($row->created_at)->timezone('Asia/Jakarta')->format('d M Y  •  H:i'),
+            ];
+        });
+
+        return response()->json([
+            "status" => "success",
+            "orders" => $orders,
+        ]);
+    }
+
+    // POST update_order_status.php
+    public function updateOrderStatus(Request $request)
+    {
+        $orderId      = $request->input('order_id', '');
+        $newStatus    = $request->input('status', '');
+        $cancelReason = $request->input('cancel_reason');
+
+        if (empty($orderId) || empty($newStatus)) {
+            return response()->json(["status" => "error", "message" => "Parameter tidak lengkap"]);
+        }
+
+        // Try matching on order_id string first, fallback to numeric id
+        $updated = DB::table('orders')
+            ->where('order_id', $orderId)
+            ->update([
+                'status'        => $newStatus,
+                'cancel_reason' => $cancelReason,
+                'notified_user' => 0,
+                'updated_at'    => Carbon::now('Asia/Jakarta'),
+            ]);
+
+        if (!$updated) {
+            $updated = DB::table('orders')
+                ->where('id', $orderId)
+                ->update([
+                    'status'        => $newStatus,
+                    'cancel_reason' => $cancelReason,
+                    'notified_user' => 0,
+                    'updated_at'    => Carbon::now('Asia/Jakarta'),
+                ]);
+        }
+
+        if ($updated) {
+            return response()->json(["status" => "success", "message" => "Status pesanan diperbarui"]);
+        }
+
+        return response()->json(["status" => "error", "message" => "Pesanan tidak ditemukan"]);
     }
 }

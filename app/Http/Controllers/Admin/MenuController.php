@@ -117,13 +117,6 @@ class MenuController extends Controller
 
         $file->move($destination, $filename);
 
-        $xamppDir = 'C:\\xampp\\htdocs\\aish_api\\uploads\\menus';
-        if (!File::exists($xamppDir)) {
-            File::makeDirectory($xamppDir, 0777, true);
-        }
-
-        @copy($destination . DIRECTORY_SEPARATOR . $filename, $xamppDir . DIRECTORY_SEPARATOR . $filename);
-
         return 'uploads/menus/' . $filename;
     }
 
@@ -136,11 +129,6 @@ class MenuController extends Controller
         $localPath = public_path($imagePath);
         if (File::exists($localPath)) {
             File::delete($localPath);
-        }
-
-        $xamppPath = 'C:\\xampp\\htdocs\\aish_api\\' . $imagePath;
-        if (File::exists($xamppPath)) {
-            File::delete($xamppPath);
         }
     }
 }

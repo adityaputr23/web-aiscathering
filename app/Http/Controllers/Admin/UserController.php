@@ -120,14 +120,6 @@ class UserController extends Controller
 
         $file->move($destination, $filename);
 
-        // Android App API Profile uploads synchronization directory
-        $xamppDir = 'C:\\xampp\\htdocs\\aish_api\\uploads\\profile';
-        if (!File::exists($xamppDir)) {
-            File::makeDirectory($xamppDir, 0777, true);
-        }
-
-        @copy($destination . DIRECTORY_SEPARATOR . $filename, $xamppDir . DIRECTORY_SEPARATOR . $filename);
-
         return $filename;
     }
 
@@ -142,9 +134,5 @@ class UserController extends Controller
             File::delete($localPath);
         }
 
-        $xamppPath = 'C:\\xampp\\htdocs\\aish_api\\uploads\\profile\\' . $filename;
-        if (File::exists($xamppPath)) {
-            File::delete($xamppPath);
-        }
     }
 }

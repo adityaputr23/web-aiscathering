@@ -584,7 +584,7 @@
             }
         });
 
-        // --- REAL-TIME GLOBAL UNREAD CHAT POLLING ---
+        // --- REAL-TIME GLOBAL UNREAD CHAT VIA WEBSOCKET ---
         let lastGlobalUnreadCount = null;
 
         async function checkGlobalUnread() {
@@ -617,13 +617,27 @@
                     lastGlobalUnreadCount = count;
                 }
             } catch (e) {
-                console.log("Unread Polling Error: ", e);
+                console.log("Unread Fetch Error: ", e);
             }
         }
 
-        // Start polling every 3 seconds
-        setInterval(checkGlobalUnread, 3000);
-        window.addEventListener('DOMContentLoaded', checkGlobalUnread);
+        // Initial check and register Echo listener
+        window.addEventListener('DOMContentLoaded', () => {
+            checkGlobalUnread();
+            
+            if (window.Echo) {
+                window.Echo.channel('chats')
+                    .listen('.ChatMessageSent', (e) => {
+                        checkGlobalUnread();
+                    })
+                    .listen('.ChatMessageDeleted', (e) => {
+                        checkGlobalUnread();
+                    });
+            }
+        });
+
+        // Long fallback poll (60s) instead of 3s
+        setInterval(checkGlobalUnread, 60000);
     </script>
 
     <!-- Global Notif Permission Modal -->

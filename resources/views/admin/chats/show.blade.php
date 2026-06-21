@@ -311,6 +311,7 @@
     }
 
     function appendMessage(msg) {
+        if (document.getElementById(`msg-${msg.id}`)) return;
         const isAdmin = msg.sender_type === 'ADMIN';
         const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
@@ -552,7 +553,7 @@
         }
     }
 
-    // Auto-poll for new messages
+    // Auto-poll fallback for new messages
     async function checkNewMessages() {
         try {
             const response = await fetch('{{ route('admin.chats.raw', $senderEmail) }}');
@@ -581,6 +582,37 @@
             }
         } catch (e) {}
     }
-    setInterval(checkNewMessages, 2000);
+
+    // Subscribe to Laravel Echo chat channel
+    window.addEventListener('DOMContentLoaded', () => {
+        if (window.Echo) {
+            window.Echo.channel('chat.{{ $senderEmail }}')
+                .listen('.ChatMessageSent', (e) => {
+                    const msg = e.message;
+                    appendMessage(msg);
+                    lastCount++;
+
+                    if (msg.sender_type === 'USER') {
+                        playNotification();
+                        showBrowserNotification('Pesan Baru dari {{ $senderEmail }}', msg.message);
+                        if (document.activeElement !== replyInput) flashTitle();
+                    }
+                })
+                .listen('.ChatMessageUpdated', (e) => {
+                    const msg = e.message;
+                    const el = document.querySelector(`#msg-${msg.id} .message-content`);
+                    if (el) {
+                        el.innerHTML = parseMessageContent(msg.message);
+                    }
+                })
+                .listen('.ChatMessageDeleted', (e) => {
+                    const el = document.getElementById(`msg-${e.messageId}`);
+                    if (el) el.remove();
+                });
+        }
+    });
+
+    // Fallback poll every 30 seconds
+    setInterval(checkNewMessages, 30000);
 </script>
 @endsection

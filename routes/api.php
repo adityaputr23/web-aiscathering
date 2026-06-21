@@ -40,3 +40,7 @@ Route::get('/get_schedules.php', [AndroidApiController::class, 'getSchedules']);
 Route::get('/get_users.php', [AndroidApiController::class, 'getUsers']);
 Route::post('/save_user.php', [AndroidApiController::class, 'saveUser']);
 Route::post('/delete_user.php', [AndroidApiController::class, 'deleteUser']);
+Route::get('/websocket-config', [AndroidApiController::class, 'getWebSocketConfig']);
+Route::post('/place_order.php', [AndroidApiController::class, 'placeOrder']);
+Route::post('/get_orders.php', [AndroidApiController::class, 'getOrders']);
+Route::post('/update_order_status.php', [AndroidApiController::class, 'updateOrderStatus']);
