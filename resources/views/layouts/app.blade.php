@@ -944,6 +944,93 @@
             background-image: none !important;
         }
 
+        html.dark header#home {
+            background-color: var(--bg-dark) !important;
+        }
+
+        /* Stats Section Dark Mode overrides */
+        html.dark #stats-section > div > div {
+            background-color: rgba(24, 24, 27, 0.8) !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+        }
+
+        html.dark #stats-section div.bg-slate-50\/50 {
+            background-color: rgba(0, 0, 0, 0.3) !important;
+        }
+
+        html.dark #stats-section div.bg-slate-50\/30 {
+            background-color: rgba(0, 0, 0, 0.2) !important;
+        }
+
+        html.dark #stats-section div.bg-slate-50\/20 {
+            background-color: rgba(0, 0, 0, 0.16) !important;
+        }
+
+        html.dark #stats-section div {
+            border-color: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        html.dark #stats-section .bg-emerald-100 {
+            background-color: rgba(92, 233, 197, 0.15) !important;
+            color: #5ce9c5 !important;
+        }
+
+        html.dark #stats-section .bg-orange-100 {
+            background-color: rgba(255, 160, 67, 0.15) !important;
+            color: #ffa043 !important;
+        }
+
+        html.dark #stats-section .bg-amber-100 {
+            background-color: rgba(255, 220, 67, 0.15) !important;
+            color: #ffdc43 !important;
+        }
+
+        html.dark #stats-section .bg-violet-100 {
+            background-color: rgba(196, 181, 253, 0.15) !important;
+            color: #c4b5fd !important;
+        }
+
+        html.dark #stats-section .text-emerald-600 {
+            color: #5ce9c5 !important;
+        }
+
+        html.dark #stats-section .text-orange-600 {
+            color: #ffa043 !important;
+        }
+
+        html.dark #stats-section .text-amber-600 {
+            color: #ffdc43 !important;
+        }
+
+        html.dark #stats-section .text-violet-600 {
+            color: #c4b5fd !important;
+        }
+
+        /* Eyebrow & Button Overrides inside Hero */
+        html.dark header#home .bg-slate-200\/50 {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            color: #ffffff !important;
+        }
+
+        html.dark header#home .bg-\[\#f97316\]\/10 {
+            background-color: rgba(249, 115, 22, 0.15) !important;
+            border-color: rgba(249, 115, 22, 0.4) !important;
+            color: #fb923c !important;
+        }
+
+        html.dark header#home .bg-emerald-500\/10 {
+            background-color: rgba(16, 185, 129, 0.15) !important;
+            border-color: rgba(16, 185, 129, 0.4) !important;
+            color: #34d399 !important;
+        }
+
+        html.dark header#home .text-slate-400 {
+            color: rgba(255, 255, 255, 0.35) !important;
+        }
+
         html.dark nav {
             background: rgba(9, 9, 11, 0.7) !important;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
