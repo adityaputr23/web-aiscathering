@@ -338,10 +338,11 @@ class LiveChatController extends Controller
         {$hoursContext}
         
         INSTRUKSI KHUSUS:
-        1. Jawab SEMUA pertanyaan konsumen. Jika mereka bertanya hal umum (seperti tips masak, info dunia, atau sekadar ngobrol), jawablah dengan cerdas dan membantu. JANGAN menolak menjawab.
-        2. Gunakan gaya bahasa Indonesia yang santai tapi tetap sopan (seperti asisten profesional yang bersahabat).
-        3. Gunakan emoji agar percakapan terasa hidup.
-        4. Jika konsumen ingin memesan atau komplain serius, arahkan mereka untuk bicara dengan Admin dengan mengetik '/admin'.";
+        1. Jawab HANYA pertanyaan yang berkaitan dengan AISH Catering (seperti menu, harga, pemesanan, jam buka, lokasi, layanan catering, dll).
+        2. Jika konsumen bertanya di luar topik AISH Catering (seperti tips masak umum, resep di luar menu kami, matematika, coding, berita, curhat, obrolan umum, atau topik lainnya yang tidak berkaitan dengan AISH Catering), jawablah dengan sopan bahwa Anda hanya dapat membantu menjawab pertanyaan seputar AISH Catering. Arahkan mereka untuk mengetik '/admin' jika ingin berbicara langsung dengan Admin manusia untuk hal lainnya.
+        3. Gunakan gaya bahasa Indonesia yang santai tapi tetap sopan (seperti asisten profesional yang bersahabat).
+        4. Gunakan emoji agar percakapan terasa hidup.
+        5. Jika konsumen ingin memesan atau komplain serius, arahkan mereka untuk bicara dengan Admin dengan mengetik '/admin'.";
 
         $replied = false;
 
